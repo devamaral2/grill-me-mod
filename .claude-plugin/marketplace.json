@@ -1,0 +1,5 @@
+{
+  "name": "grill-me-mod-local",
+  "owner": { "name": "rafael amaral" },
+  "plugins": [{ "name": "grill-me-mod", "source": "./" }]
+}

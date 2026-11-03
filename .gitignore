@@ -1,0 +1,30 @@
+# dependências
+node_modules/
+
+# estado de execução das entrevistas (gerado em tempo de uso)
+.grill-me/
+
+# segredos e configuração local
+.env
+.env.*
+!.env.example
+.claude/settings.local.json
+
+# arquivos compactados redundantes (as pastas descompactadas já estão versionadas)
+templates/*.zip
+
+# logs e temporários
+*.log
+npm-debug.log*
+*.tmp
+*.swp
+
+# sistema operacional / editores
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# build
+dist/
+coverage/

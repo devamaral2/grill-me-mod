@@ -1,0 +1,9 @@
+{
+  "name": "grill-me-mod",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/state.spec.mjs",
+    "demo": "node app/server.mjs --root . --state .grill-me/state.json --port 4789"
+  }
+}

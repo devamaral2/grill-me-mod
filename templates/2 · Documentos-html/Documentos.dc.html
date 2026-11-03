@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Revisão dos documentos</title>
+<script src="./vendor/react.js"></script>
+<script src="./vendor/react-dom.js"></script>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0;background:#FAF9F5}
+button{font:inherit}
+textarea{font:inherit}
+button:focus-visible,a:focus-visible,textarea:focus-visible{outline:2px solid #2A78D6;outline-offset:2px}
+textarea:focus-visible{outline-offset:-2px}
+</style>
+</helmet>
+<div style="min-height: 900px; display: flex; flex-direction: column; background: #FAF9F5; color: #141413; font-family: 'Anthropic Sans', system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; line-height: 1.5">
+
+  <header style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px 32px; padding: 16px 32px; border-bottom: 0.5px solid rgba(31,30,29,0.15)">
+    <div style="display: flex; align-items: center; gap: 16px; min-width: 0">
+      <span style="font-family: 'Anthropic Mono', 'JetBrains Mono', 'SF Mono', Monaco, 'Courier New', monospace; font-size: 13px; padding: 4px 10px; border-radius: 6px; background: #141413; color: #FAF9F5">/grill-me-mod</span>
+      <div style="min-width: 0">
+        <div style="font-size: 12px; color: #5E5D59; line-height: 1.35">Tema da entrevista</div>
+        <div style="font-family: 'Anthropic Serif', Georgia, 'Times New Roman', Times, serif; font-size: 18px; font-weight: 500; line-height: 1.3">Reserva de estoque durante o checkout</div>
+      </div>
+    </div>
+    <nav aria-label="Etapas do mod" style="display: flex; align-items: center; gap: 12px; font-size: 14px">
+      <a href="Finalizacao.dc.html" style="display: flex; align-items: center; gap: 8px; min-height: 44px; color: #4D4C48; text-decoration: none">
+        <span style="width: 24px; height: 24px; border-radius: 50%; background: #3A6B2B; display: flex; align-items: center; justify-content: center">
+          <svg width="14" height="14" viewBox="0 0 20 20" aria-hidden="true"><path d="M5 10.5l3.2 3.2L15 6.8" fill="none" stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        </span>
+        <span>Entrevista</span>
+      </a>
+      <span aria-hidden="true" style="width: 32px; height: 1px; background: rgba(31,30,29,0.3)"></span>
+      <div aria-current="step" style="display: flex; align-items: center; gap: 8px; font-weight: 500">
+        <span style="width: 24px; height: 24px; border-radius: 50%; background: #141413; color: #FAF9F5; display: flex; align-items: center; justify-content: center; font-size: 12px">2</span>
+        <span>Documentos</span>
+      </div>
+    </nav>
+  </header>
+
+  <div style="flex: 1; display: flex; flex-wrap: wrap; align-items: stretch">
+
+    <aside aria-label="Documentos criados" style="flex: 1 1 280px; max-width: 300px; box-sizing: border-box; padding: 24px 16px; display: flex; flex-direction: column; gap: 4px; border-right: 0.5px solid rgba(31,30,29,0.15)">
+      <div style="padding: 0 12px 12px">
+        <div style="font-family: 'Anthropic Serif', Georgia, 'Times New Roman', Times, serif; font-size: 20px; font-weight: 500; line-height: 1.3">Documentos criados</div>
+        <div style="margin-top: 2px; font-size: 13px; color: #4D4C48">{{ approvedLabel }}</div>
+      </div>
+
+      <sc-for list="{{ items }}" as="item" hint-placeholder-count="3">
+        <button type="button" onClick="{{ item.select }}" aria-current="{{ item.ariaCurrent }}" style="display: flex; flex-direction: column; align-items: flex-start; gap: 6px; width: 100%; box-sizing: border-box; padding: 12px; border-radius: 10px; text-align: left; cursor: pointer; color: #141413; {{ item.style }}">
+          <span style="display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%">
+            <span style="font-size: 15px; font-weight: 500; line-height: 1.35">{{ item.kind }}</span>
+            <span style="flex: none; font-size: 12px; font-weight: 500; padding: 2px 10px; border-radius: 999px; {{ item.chipStyle }}">{{ item.chip }}</span>
+          </span>
+          <span style="font-family: 'Anthropic Mono', 'JetBrains Mono', 'SF Mono', Monaco, 'Courier New', monospace; font-size: 12px; line-height: 1.45; color: #4D4C48; word-break: break-all">{{ item.path }}</span>
+          <span style="font-size: 13px; color: #5E5D59; line-height: 1.35">{{ item.summary }}</span>
+        </button>
+      </sc-for>
+
+      <div style="margin-top: auto; padding: 24px 12px 0; display: flex; flex-direction: column; gap: 12px">
+        <button type="button" disabled="{{ cantFinish }}" style="min-height: 44px; padding: 0 16px; border-radius: 10px; border: none; background: #141413; color: #FAF9F5; font-size: 14px; font-weight: 500; cursor: pointer; {{ finishStyle }}">Concluir e fechar</button>
+        <a href="Finalizacao.dc.html" style="display: flex; align-items: center; justify-content: center; min-height: 44px; font-size: 14px; color: #4D4C48">Voltar às decisões</a>
+      </div>
+    </aside>
+
+    <main style="flex: 999 1 520px; min-width: 0; box-sizing: border-box; padding: 24px 32px 40px; display: flex; flex-direction: column; gap: 20px">
+
+      <div style="display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 16px">
+        <div style="min-width: 0">
+          <div style="font-size: 13px; color: #5E5D59">{{ cur.kind }}</div>
+          <div style="font-family: 'Anthropic Mono', 'JetBrains Mono', 'SF Mono', Monaco, 'Courier New', monospace; font-size: 14px; word-break: break-all">{{ cur.path }}</div>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+          <a href="#abrir-arquivo" style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; box-sizing: border-box; border-radius: 10px; border: 0.5px solid rgba(31,30,29,0.3); background: #FFFFFF; color: #141413; font-size: 14px; font-weight: 500; text-decoration: none">
+            Abrir arquivo para editar
+            <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M8 4.5H5.5a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V12M11.5 4.5h4v4M15.5 4.5L9 11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+          </a>
+          <sc-if value="{{ cur.pending }}" hint-placeholder-val="{{ true }}">
+            <button type="button" onClick="{{ approve }}" style="min-height: 44px; padding: 0 18px; border-radius: 10px; border: none; background: #141413; color: #FAF9F5; font-size: 14px; font-weight: 500; cursor: pointer">Aprovar documento</button>
+          </sc-if>
+          <sc-if value="{{ cur.approved }}" hint-placeholder-val="{{ false }}">
+            <button type="button" onClick="{{ unapprove }}" style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 10px; border: 0.5px solid #3A6B2B; background: #E9F1E2; color: #3A6B2B; font-size: 14px; font-weight: 500; cursor: pointer">
+              <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M4.5 10.5l3.7 3.7L15.5 6.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+              Aprovado · desfazer
+            </button>
+          </sc-if>
+        </div>
+      </div>
+
+      <article aria-label="Pré-visualização do documento" style="box-sizing: border-box; padding: 32px 36px; background: #FFFFFF; border: 0.5px solid rgba(31,30,29,0.15); border-radius: 14px">
+
+        <sc-if value="{{ isCtx }}" hint-placeholder-val="{{ false }}">
+          <div style="display: flex; flex-direction: column; gap: 20px">
+            <div>
+              <h1 style="margin: 0; font-family: 'Anthropic Serif', Georgia, 'Times New Roman', Times, serif; font-size: 28px; font-weight: 500; line-height: 1.3">Linguagem ubíqua</h1>
+              <p style="margin: 4px 0 0; font-size: 14px; color: #4D4C48">Mostrando só o que mudou nesta entrevista.</p>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px">
+              <sc-for list="{{ terms }}" as="t" hint-placeholder-count="4">
+                <div style="display: flex; flex-direction: column; gap: 8px">
+                  <div style="display: flex; gap: 12px; align-items: flex-start; padding: 14px 16px; border-radius: 10px; background: #E9F1E2">
+                    <span aria-hidden="true" style="flex: none; width: 16px; font-family: 'Anthropic Mono', 'JetBrains Mono', 'SF Mono', Monaco, 'Courier New', monospace; font-size: 14px; color: #3A6B2B; line-height: 1.6">+</span>
+                    <div style="flex: 1; min-width: 0">
+                      <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px">
+                        <span style="font-size: 16px; font-weight: 600">{{ t.name }}</span>
+                        <span style="font-size: 12px; font-weight: 500; padding: 1px 8px; border-radius: 999px; background: #FFFFFF; color: #3A6B2B">{{ t.tag }}</span>
+                      </div>
+                      <p style="margin: 4px 0 0; font-size: 15px; line-height: 1.55">{{ t.def }}</p>
+                      <sc-if value="{{ t.hasAvoid }}" hint-placeholder-val="{{ false }}">
+                        <p style="margin: 6px 0 0; font-size: 14px; color: #4D4C48">Evitar: {{ t.avoid }}</p>
+                      </sc-if>
+                    </div>
+                  </div>
+                  <sc-if value="{{ t.hasWas }}" hint-placeholder-val="{{ false }}">
+                    <div style="display: flex; gap: 12px; align-items: flex-start; padding: 10px 16px; border-radius: 10px; background: #F8EAE3">
+                      <span aria-hidden="true" style="flex: none; width: 16px; font-family: 'Anthropic Mono', 'JetBrains Mono', 'SF Mono', Monaco, 'Courier New', monospace; font-size: 14px; color: #8F3A1E; line-height: 1.6">−</span>
+                      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #5E5D59; text-decoration: line-through">{{ t.was }}</p>
+                    </div>
+                  </sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isAdr }}" hint-placeholder-val="{{ true }}">
+          <div style="display: flex; flex-direction: column; gap: 20px; max-width: 680px">
+            <div>
+              <div style="font-family: 'Anthropic Mono', 'JetBrains Mono', 'SF Mono', Monaco, 'Courier New', monospace; font-size: 13px; color: #5E5D59">{{ adr.num }}</div>
+              <h1 style="margin: 4px 0 12px; font-family: 'Anthropic Serif', Georgia, 'Times New Roman', Times, serif; font-size: 28px; font-weight: 500; line-height: 1.3">{{ adr.title }}</h1>
+              <div style="display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 13px; color: #4D4C48">
+                <span style="font-weight: 500; padding: 2px 10px; border-radius: 999px; background: #F0EEE6; color: #3D3D3A">Status: Proposto</span>
+                <span>2 de novembro de 2026</span>
+              </div>
+            </div>
+            <section>
+              <h2 style="margin: 0 0 6px; font-family: 'Anthropic Serif', Georgia, 'Times New Roman', Times, serif; font-size: 20px; font-weight: 500; line-height: 1.3">Contexto</h2>
+              <p style="margin: 0; font-size: 15px; line-height: 1.65; text-wrap: pretty">{{ adr.context }}</p>
+            </section>
+            <section>
+              <h2 style="margin: 0 0 6px; font-family: 'Anthropic Serif', Georgia, 'Times New Roman', Times, serif; font-size: 20px; font-weight: 500; line-height: 1.3">Decisão</h2>
+              <p style="margin: 0; font-size: 15px; line-height: 1.65; text-wrap: pretty">{{ adr.decision }}</p>
+            </section>
+            <section>
+              <h2 style="margin: 0 0 6px; font-family: 'Anthropic Serif', Georgia, 'Times New Roman', Times, serif; font-size: 20px; font-weight: 500; line-height: 1.3">Consequências</h2>
+              <ul style="margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; font-size: 15px; line-height: 1.6">
+                <sc-for list="{{ adr.cons }}" as="c" hint-placeholder-count="3">
+                  <li>{{ c.text }}</li>
+                </sc-for>
+              </ul>
+            </section>
+          </div>
+        </sc-if>
+
+      </article>
+    </main>
+
+    <section aria-label="Chat do documento" style="flex: 1 1 340px; max-width: 380px; box-sizing: border-box; display: flex; flex-direction: column; border-left: 0.5px solid rgba(31,30,29,0.15); background: #F5F4ED">
+      <div style="padding: 20px 20px 12px; border-bottom: 0.5px solid rgba(31,30,29,0.15)">
+        <div style="font-family: 'Anthropic Serif', Georgia, 'Times New Roman', Times, serif; font-size: 18px; font-weight: 500; line-height: 1.3">Ajustes e aprovação</div>
+        <div style="margin-top: 2px; font-family: 'Anthropic Mono', 'JetBrains Mono', 'SF Mono', Monaco, 'Courier New', monospace; font-size: 12px; color: #4D4C48; word-break: break-all">{{ cur.path }}</div>
+      </div>
+
+      <div style="flex: 1; min-height: 320px; padding: 20px; display: flex; flex-direction: column; gap: 16px">
+        <sc-for list="{{ thread }}" as="m" hint-placeholder-count="2">
+          <sc-if value="{{ m.isUser }}" hint-placeholder-val="{{ false }}">
+            <div style="align-self: flex-end; max-width: 85%; box-sizing: border-box; padding: 10px 14px; background: #FFFFFF; border: 0.5px solid rgba(31,30,29,0.15); border-radius: 14px 14px 4px 14px">
+              <div style="font-size: 12px; font-weight: 500; color: #5E5D59; line-height: 1.35">Você</div>
+              <div style="margin-top: 2px; font-size: 14px; line-height: 1.55">{{ m.text }}</div>
+            </div>
+          </sc-if>
+          <sc-if value="{{ m.isClaude }}" hint-placeholder-val="{{ true }}">
+            <div style="align-self: flex-start; max-width: 92%">
+              <div style="font-size: 12px; font-weight: 500; color: #5E5D59; line-height: 1.35">Claude</div>
+              <div style="margin-top: 2px; font-size: 14px; line-height: 1.55; text-wrap: pretty">{{ m.text }}</div>
+            </div>
+          </sc-if>
+        </sc-for>
+      </div>
+
+      <div style="padding: 12px">
+        <div style="background: #FFFFFF; border: 0.5px solid rgba(31,30,29,0.3); border-radius: 14px; overflow: hidden">
+          <label for="ajuste" style="position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap">Pedir um ajuste neste documento</label>
+          <textarea id="ajuste" rows="3" placeholder="Peça um ajuste ou escreva “aprovado”…" value="{{ draft }}" onChange="{{ onDraft }}" style="width: 100%; box-sizing: border-box; padding: 12px 16px 4px; border: none; background: transparent; color: #141413; font-size: 14px; line-height: 1.55; resize: none"></textarea>
+          <div style="display: flex; justify-content: flex-end; padding: 4px 8px 8px">
+            <button type="button" onClick="{{ send }}" disabled="{{ cantSend }}" style="display: flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 10px; border: none; background: #141413; color: #FAF9F5; font-size: 14px; font-weight: 500; cursor: pointer; {{ sendStyle }}">
+              Enviar
+              <svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 16V4.5M5 9.2l5-5 5 5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1120}}'>
+class Component extends DCLogic {
+  docs() {
+    return [
+      {
+        id: 'ctx',
+        kind: 'Linguagem ubíqua',
+        path: 'CONTEXT.md',
+        summary: '3 termos novos · 1 alterado',
+        thread: [
+          { from: 'claude', text: 'Atualizei o CONTEXT.md: três termos novos (Reserva, Extensão e Liberação) e uma nota em Bloqueio. Quer ajustar alguma definição?' }
+        ]
+      },
+      {
+        id: 'adr14',
+        kind: 'ADR 0014',
+        path: 'docs/adr/0014-estoque-e-dono-da-reserva.md',
+        summary: 'Novo · status Proposto',
+        thread: [
+          { from: 'claude', text: 'Criei o ADR 0014 com status Proposto. Quando você aprovar, eu marco como Aceito.' }
+        ]
+      },
+      {
+        id: 'adr15',
+        kind: 'ADR 0015',
+        path: 'docs/adr/0015-reserva-expira-por-prazo-fixo.md',
+        summary: 'Novo · status Proposto',
+        thread: [
+          { from: 'claude', text: 'Criei o ADR 0015 com status Proposto.' },
+          { from: 'user', text: 'Cite o limite total de 25 minutos na decisão.' },
+          { from: 'claude', text: 'Feito: a decisão agora diz que o prazo soma no máximo 25 minutos.' }
+        ]
+      }
+    ];
+  }
+
+  terms() {
+    return [
+      { name: 'Reserva', tag: 'Novo', def: 'Retenção temporária de estoque durante o checkout. Cada Reserva cobre um item do pedido e pertence ao Estoque. Estados: ativa, estendida, liberada e consumida.', avoid: 'bloqueio, segurar', hasAvoid: true, was: '', hasWas: false },
+      { name: 'Extensão', tag: 'Novo', def: 'Prorrogação única, de 10 minutos, de uma Reserva cujo pagamento ficou pendente.', avoid: '', hasAvoid: false, was: '', hasWas: false },
+      { name: 'Liberação', tag: 'Novo', def: 'Devolução imediata do estoque de uma Reserva, disparada por pagamento recusado ou pela expiração.', avoid: '', hasAvoid: false, was: '', hasWas: false },
+      { name: 'Bloqueio', tag: 'Alterado', def: 'Item retido pelo setor de qualidade até inspeção. Não se aplica ao checkout: veja Reserva.', avoid: '', hasAvoid: false, was: 'Item retido pelo setor de qualidade até inspeção.', hasWas: true }
+    ];
+  }
+
+  adrs() {
+    return {
+      adr14: {
+        num: 'ADR 0014',
+        title: 'Estoque é dono da Reserva',
+        context: 'O checkout precisa reter estoque enquanto o pagamento acontece. Sem um dono claro, Pedido e Estoque poderiam alterar o mesmo estado.',
+        decision: 'O contexto de Estoque é o único dono do estado da Reserva. O Pedido solicita, estende e confirma a reserva por comandos.',
+        cons: [
+          { text: 'O Pedido nunca altera uma Reserva diretamente.' },
+          { text: 'Regras de expiração e liberação ficam todas no Estoque.' },
+          { text: 'O checkout passa a depender de comandos assíncronos para confirmar a reserva.' }
+        ]
+      },
+      adr15: {
+        num: 'ADR 0015',
+        title: 'Reserva expira por prazo fixo com uma extensão',
+        context: 'Carrinhos parados não devem segurar estoque, mas pagamentos como o Pix podem demorar além do prazo.',
+        decision: 'A Reserva expira 15 minutos após o início do pagamento. Um pagamento pendente estende o prazo uma única vez, em 10 minutos, somando no máximo 25 minutos. Pagamento recusado libera a Reserva na hora.',
+        cons: [
+          { text: 'Estoque pode ficar preso por até 25 minutos no pior caso.' },
+          { text: 'Sem renovação, clientes lentos precisam reiniciar o pagamento.' }
+        ]
+      }
+    };
+  }
+
+  renderVals() {
+    const s = this.state || {};
+    const docs = this.docs();
+    const sel = s.sel || 'adr14';
+    const approvedMap = s.approved || { ctx: true };
+    const drafts = s.drafts || {};
+    const sent = s.sent || {};
+    const total = docs.length;
+    const approvedCount = docs.filter((d) => approvedMap[d.id]).length;
+    const doc = docs.find((d) => d.id === sel) || docs[0];
+    const isApproved = !!approvedMap[doc.id];
+
+    const items = docs.map((d) => {
+      const ok = !!approvedMap[d.id];
+      const current = d.id === doc.id;
+      return {
+        kind: d.kind,
+        path: d.path,
+        summary: d.summary,
+        chip: ok ? 'Aprovado' : 'Em revisão',
+        chipStyle: ok ? 'background:#E9F1E2; color:#3A6B2B' : 'background:#F8EAE3; color:#8F3A1E',
+        ariaCurrent: current ? 'true' : undefined,
+        style: current
+          ? 'background:#FFFFFF; border:0.5px solid rgba(31,30,29,0.3); box-shadow:0 1px 2px rgba(20,20,19,0.06)'
+          : 'background:transparent; border:0.5px solid transparent',
+        select: () => this.setState({ sel: d.id })
+      };
+    });
+
+    const thread = doc.thread.concat(sent[doc.id] || []).map((m) => ({
+      text: m.text,
+      isUser: m.from === 'user',
+      isClaude: m.from !== 'user'
+    }));
+    const draft = drafts[doc.id] || '';
+    const allDone = approvedCount === total;
+    const adrs = this.adrs();
+
+    return {
+      items: items,
+      approvedLabel: approvedCount + ' de ' + total + ' aprovados',
+      cantFinish: !allDone,
+      finishStyle: allDone ? '' : 'background:#DEDCD1; color:#5E5D59; cursor:not-allowed',
+      cur: { kind: doc.kind, path: doc.path, approved: isApproved, pending: !isApproved },
+      isCtx: doc.id === 'ctx',
+      isAdr: doc.id !== 'ctx',
+      terms: this.terms(),
+      adr: adrs[doc.id] || adrs.adr14,
+      approve: () => this.setState({ approved: Object.assign({}, approvedMap, { [doc.id]: true }) }),
+      unapprove: () => this.setState({ approved: Object.assign({}, approvedMap, { [doc.id]: false }) }),
+      thread: thread,
+      draft: draft,
+      cantSend: draft.trim() === '',
+      sendStyle: draft.trim() === '' ? 'opacity:0.4; cursor:not-allowed' : '',
+      onDraft: (e) => this.setState({ drafts: Object.assign({}, drafts, { [doc.id]: e.target.value }) }),
+      send: () => {
+        const t = draft.trim();
+        if (!t) return;
+        const list = (sent[doc.id] || []).concat([{ from: 'user', text: t }]);
+        this.setState({ sent: Object.assign({}, sent, { [doc.id]: list }), drafts: Object.assign({}, drafts, { [doc.id]: '' }) });
+      }
+    };
+  }
+}
+</script>
+</body>
+</html>

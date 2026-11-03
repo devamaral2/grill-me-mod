@@ -1,0 +1,5 @@
+{
+  "name": "grill-me-mod",
+  "version": "0.1.0",
+  "description": "Entrevista grill-with-docs numa página web: uma aba por pergunta, chat próprio, finalização e revisão dos documentos (glossário e ADRs)."
+}
