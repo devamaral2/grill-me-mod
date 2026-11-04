@@ -23,6 +23,8 @@ let notes: string[] = []
 let owed = false
 let retries = 0
 const MAX_RETRIES = 2
+// The interview ended and Claude has not proposed what to write: ask again, twice at most.
+let planAsks = 0
 const ROUND_RULE =
   'Responda SOMENTE com o JSON da rodada ({ "questions": [...], "generalObservation": "..." }), sem texto fora do JSON, como manda a skill.'
 let noteTimer: { cancel: () => void } | undefined
@@ -156,6 +158,43 @@ const apply = async ($: Api, a: Action) => {
       )
       return
     }
+    // The selection step: nothing is written until the person confirms it.
+    case 'setTerm':
+      await mutate($, s => S.setTerm(s, id, a.key === 'on'))
+      return
+    case 'termsAll':
+      await mutate($, s => S.selectAllTerms(s, a.key === 'on'))
+      return
+    case 'addTerm':
+      await mutate($, s => S.addTerm(s, text))
+      return
+    case 'setAdr':
+      await mutate($, s => S.setAdr(s, id, a.key === 'on'))
+      return
+    case 'confirmAllAdrs':
+      await mutate($, S.confirmAllAdrs)
+      return
+    case 'setExtra':
+      await mutate($, s => S.setExtra(s, id, a.key === 'on'))
+      return
+    case 'createDocs': {
+      const command = (a.command ?? '').trim()
+      let started = false
+      const s = await mutate($, s => {
+        const next = S.startDocs(s, command || s.command)
+        started = next !== s
+        return next
+      })
+      if (!started) return
+      tell(
+        $,
+        `O usuário confirmou a seleção. Escreva agora estes documentos, e só eles:\n\n${S.planLines(s)}\n\n` +
+          (s.command ? `Instrução dele: "${s.command}"\n\n` : '') +
+          `Siga a seção "Escrever os documentos" da skill ${SKILL}. Registre cada arquivo com grill_docs no mesmo turno em que o escrever. ` +
+          `Devolva questions vazio e, em generalObservation, uma linha por documento criado. ${ROUND_RULE}`,
+      )
+      return
+    }
     case 'approve': {
       const s = await mutate($, s => S.setApproved(s, id, true))
       const d = s.docs.find(x => x.id === id)
@@ -243,7 +282,7 @@ const TOOLS = [
   {
     name: 'grill_docs',
     description:
-      'Registra na página os documentos que você escreveu ou alterou (glossário e ADRs), ao mesmo tempo em que os escreve. Não é a sua resposta: a resposta é sempre o JSON da rodada. Salvar de novo um documento aprovado devolve-o para revisão. A página lê o arquivo do disco para a pré-visualização.',
+      'Registra na página os documentos que você escreveu ou alterou (glossário, ADRs, TDD, PRD, BRD, RFC, runbook), ao mesmo tempo em que os escreve, depois que o usuário confirmou a seleção. Não é a sua resposta: a resposta é sempre o JSON da rodada. Salvar de novo um documento aprovado devolve-o para revisão. A página lê o arquivo do disco para a pré-visualização.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -253,7 +292,7 @@ const TOOLS = [
             type: 'object',
             properties: {
               id: { ...text, description: 'Estável, ex.: glossario, adr-0014.' },
-              kind: { type: 'string', enum: ['glossary', 'adr'] },
+              kind: { type: 'string', enum: ['glossary', 'adr', ...S.EXTRA_TYPES] },
               label: { ...text, description: 'Ex.: "Linguagem ubíqua" ou "ADR 0014".' },
               path: { ...text, description: 'Caminho relativo à raiz do projeto.' },
               summary: { ...text, description: 'Ex.: "3 termos novos · 1 alterado" ou "Novo · status Proposto".' },
@@ -279,6 +318,54 @@ const TOOLS = [
         },
       },
       required: ['docs'],
+    },
+  },
+  {
+    name: 'grill_plan',
+    description:
+      'Registra na página a proposta do que escrever depois da entrevista: os termos candidatos do glossário, os títulos das ADRs e quais documentos adicionais fazem sentido. Chame quando a fronteira esvaziar, antes de responder com questions vazio. Não escreve arquivo nenhum: o usuário escolhe na página. Chamar de novo substitui a proposta e preserva as escolhas dele.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        note: { ...text, description: 'O entendimento compartilhado, em poucas linhas.' },
+        terms: {
+          type: 'array',
+          description: 'Conceitos que devem entrar na linguagem ubíqua (só os que são novos ou mudaram).',
+          items: {
+            type: 'object',
+            properties: {
+              name: text,
+              tag: { type: 'string', enum: ['Novo', 'Alterado'] },
+              def: { ...text, description: 'Definição de uma ou duas frases.' },
+              avoid: { ...text, description: 'Sinônimos rejeitados.' },
+            },
+            required: ['name', 'def'],
+          },
+        },
+        adrs: {
+          type: 'array',
+          description: 'Uma ADR por decisão da entrevista. Sempre ao menos uma.',
+          items: {
+            type: 'object',
+            properties: { title: { ...text, description: 'Título curto da decisão.' }, why: { ...text, description: 'Uma frase: o que foi decidido e por quê.' } },
+            required: ['title'],
+          },
+        },
+        extras: {
+          type: 'array',
+          description: 'Um item por tipo, com a sua sugestão.',
+          items: {
+            type: 'object',
+            properties: {
+              type: { type: 'string', enum: S.EXTRA_TYPES },
+              suggested: { type: 'boolean', description: 'true quando o documento faz sentido para o que foi decidido.' },
+              reason: { ...text, description: 'Uma frase: por que sim ou por que não.' },
+            },
+            required: ['type', 'suggested'],
+          },
+        },
+      },
+      required: ['adrs', 'extras'],
     },
   },
   {
@@ -318,6 +405,7 @@ export const register: Register = on => {
     notes = []
     owed = false
     retries = 0
+    planAsks = 0
     await $.fs.write(`${server!.root}/.grill-me/.gitignore`, '*\n')
     await mutate($, () => ({ ...S.emptyState(), topic }))
     await openPage($, server!.url)
@@ -349,7 +437,19 @@ export const register: Register = on => {
     owed = false
     retries = 0
     const now = await $.clock.now()
-    await mutate($, s => S.applyRound(s, round, now)).catch(err => $.ui.log(`round failed: ${String(err)}`, { to: 'debug' }))
+    const after = await mutate($, s => S.applyRound(s, round, now)).catch(err => {
+      $.ui.log(`round failed: ${String(err)}`, { to: 'debug' })
+      return undefined
+    })
+    // The frontier is empty but the selection was never proposed: ask for it.
+    if (after && S.needsPlan(after) && planAsks < MAX_RETRIES) {
+      planAsks++
+      tell(
+        $,
+        `A entrevista acabou, mas o plano de documentos não foi registrado. Chame grill_plan agora (termos do glossário, títulos das ADRs e sugestão dos documentos adicionais), ` +
+          `como manda a seção "A seleção dos documentos" da skill ${SKILL}. Não escreva nenhum arquivo ainda. ${ROUND_RULE}`,
+      )
+    }
     return out
   })
 
@@ -360,6 +460,13 @@ export const register: Register = on => {
         case 'grill_docs':
           await mutate($, s => S.upsertDocs(s, input.docs ?? []))
           return answer('Documentos registrados na página. Continue: a sua resposta é o JSON da rodada.')
+        case 'grill_plan': {
+          const after = await mutate($, s => S.setPlan(s, input as S.PlanInput))
+          planAsks = 0
+          if (!after.plan || (after.phase !== 'interview' && after.phase !== 'plan')) return answer('O plano só pode ser registrado antes de os documentos começarem. Ignorado.')
+          if (after.plan.adrs.length === 0) return answer('Plano registrado, mas sem nenhuma ADR. Toda entrevista gera ao menos uma ADR: chame grill_plan de novo com os títulos.')
+          return answer('Plano registrado na página. Não escreva nenhum arquivo ainda: a sua resposta é o JSON da rodada, com questions vazio.')
+        }
         case 'grill_state':
           return answer(JSON.stringify(await load($), null, 2))
       }

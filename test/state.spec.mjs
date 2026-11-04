@@ -258,3 +258,124 @@ test('a click answers the alternatives of Claude\'s last message, else the quest
   s = S.applyRound(s, { questions: [{ id: 'q1', reply: 'sem alternativas' }] }, 2)
   assert.equal(S.pickOption(s, 'q1', 'A').questions[0].draft, 'A \u2014 15 min')
 })
+
+// ---- the selection step ----
+
+const proposal = () => ({
+  note: 'Reserva expira em 15 min.',
+  terms: [
+    { name: 'Reserva', tag: 'Novo', def: 'Estoque separado por tempo.', avoid: 'Hold' },
+    { name: 'Liberação', tag: 'Alterado', def: 'Volta ao estoque.' },
+    { name: '', def: 'sem nome' },
+  ],
+  adrs: [{ title: 'Reserva expira por TTL', why: 'Simples.' }, { title: 'Reserva expira por TTL' }],
+  extras: [{ type: 'tdd', suggested: true, reason: 'Muda o contrato.' }, { type: 'xyz', suggested: true }],
+})
+
+/** An interview that ended with a proposal: the selection is open. */
+const planned = () => S.applyRound(S.setPlan(sentTwo(), proposal()), { questions: [reply('q1', 'ok'), reply('q2', 'ok')] }, 2)
+
+test('a proposal lists every extra document; only the suggested ones start selected', () => {
+  const { plan } = S.setPlan(S.emptyState(), proposal())
+  assert.deepEqual(plan.terms.map(t => [t.id, t.isSelected]), [['reserva', true], ['liberacao', true]])
+  assert.deepEqual(plan.adrs.map(a => [a.id, a.isConfirmed]), [['reserva-expira-por-ttl', false], ['reserva-expira-por-ttl-2', false]])
+  assert.deepEqual(plan.extras.map(e => e.type), ['tdd', 'prd', 'brd', 'rfc', 'runbook'])
+  assert.deepEqual(plan.extras.map(e => e.isSelected), [true, false, false, false, false])
+  assert.equal(plan.extras[0].isSuggested, true)
+  assert.equal(plan.extras[1].label, 'PRD · Product Requirements Document')
+})
+
+test('an empty frontier with a proposal opens the selection; without one it does not', () => {
+  assert.equal(planned().phase, 'plan')
+  assert.equal(S.applyRound(sentTwo(), { questions: [reply('q1', 'ok'), reply('q2', 'ok')] }, 2).phase, 'interview')
+  // A doubt keeps the interview going even with a proposal registered.
+  const doubt = S.applyRound(S.setPlan(sentTwo(), proposal()), { questions: [reply('q1', 'e se?', { open: true })] }, 2)
+  assert.equal(doubt.phase, 'interview')
+})
+
+test('the mod asks for the proposal only when every question is answered and none was proposed', () => {
+  const answered = S.applyRound(sentTwo(), { questions: [reply('q1', 'ok'), reply('q2', 'ok')] }, 2)
+  assert.equal(S.needsPlan(answered), true)
+  assert.equal(S.needsPlan(S.setPlan(answered, proposal())), false)
+  assert.equal(S.needsPlan(S.emptyState()), false)
+  assert.equal(S.needsPlan(seeded()), false)
+  assert.equal(S.needsPlan(S.applyRound(sentTwo(), { questions: [reply('q1', 'e se?', { open: true })] }, 2)), false)
+})
+
+test('terms are chosen like tags: set one, set all, add one of your own', () => {
+  let s = S.setTerm(planned(), 'reserva', false)
+  assert.deepEqual(s.plan.terms.map(t => t.isSelected), [false, true])
+  assert.equal(S.setTerm(s, 'reserva', false).plan.terms[0].isSelected, false)
+  s = S.selectAllTerms(s, false)
+  assert.equal(s.plan.terms.every(t => !t.isSelected), true)
+  s = S.addTerm(s, '  Janela   de reserva ')
+  assert.deepEqual(s.plan.terms.at(-1), { id: 'janela-de-reserva', name: 'Janela de reserva', tag: 'Novo', def: '', avoid: '', isSelected: true, isCustom: true })
+  const again = S.addTerm(S.setTerm(s, 'reserva', false), 'reserva')
+  assert.equal(again.plan.terms.length, s.plan.terms.length)
+  assert.equal(again.plan.terms[0].isSelected, true)
+  assert.equal(S.addTerm(s, '   '), s)
+})
+
+test('choices only count while the selection is open', () => {
+  const s = planned()
+  assert.equal(S.setTerm({ ...s, phase: 'documents' }, 'reserva', false).plan.terms[0].isSelected, true)
+  assert.equal(S.setExtra({ ...s, phase: 'interview' }, 'prd', true).plan.extras[1].isSelected, false)
+  assert.equal(S.setExtra(s, 'prd', true).plan.extras[1].isSelected, true)
+})
+
+test('the documents start only when every ADR is confirmed', () => {
+  let s = planned()
+  assert.equal(S.planReady(s), false)
+  assert.equal(S.startDocs(s, 'go'), s)
+  s = S.setAdr(s, 'reserva-expira-por-ttl', true)
+  assert.equal(S.planReady(s), false)
+  s = S.confirmAllAdrs(s)
+  assert.equal(S.planReady(s), true)
+  const go = S.startDocs(s, 'foque no TTL')
+  assert.deepEqual([go.phase, go.isWritingDocs, go.command], ['documents', true, 'foque no TTL'])
+  // Starting twice is a no-op: the second call sees the phase already moved on.
+  assert.equal(S.startDocs(go, 'again'), go)
+  s = S.setAdr(s, 'reserva-expira-por-ttl', false)
+  assert.equal(S.planReady(s), false)
+})
+
+test('a new proposal keeps what the person decided and the terms they added', () => {
+  let s = S.setTerm(planned(), 'reserva', false)
+  s = S.setAdr(s, 'reserva-expira-por-ttl', true)
+  s = S.setExtra(s, 'tdd', false)
+  s = S.addTerm(s, 'Janela')
+  const again = S.setPlan(s, { ...proposal(), terms: [{ name: 'Reserva', def: 'nova def' }], adrs: [{ title: 'Reserva expira por TTL' }, { title: 'Outra' }] })
+  assert.deepEqual(again.plan.terms.map(t => [t.id, t.isSelected]), [['reserva', false], ['janela', true]])
+  assert.equal(again.plan.terms[0].def, 'nova def')
+  assert.deepEqual(again.plan.adrs.map(a => [a.id, a.isConfirmed]), [['reserva-expira-por-ttl', true], ['outra', false]])
+  assert.equal(again.plan.extras[0].isSelected, false)
+})
+
+test('a proposal after the documents began is ignored', () => {
+  const s = { ...planned(), phase: 'documents' }
+  assert.equal(S.setPlan(s, { adrs: [{ title: 'X' }] }), s)
+})
+
+test('planLines tells Claude what to write: chosen terms, ADR titles and the skill of each extra', () => {
+  let s = S.setTerm(planned(), 'liberacao', false)
+  s = S.setExtra(S.addTerm(s, 'Janela'), 'runbook', true)
+  const text = S.planLines(S.confirmAllAdrs(s))
+  assert.match(text, /- Reserva \(Novo\): Estoque separado por tempo\. \| Evitar: Hold/)
+  assert.match(text, /- Janela \(Novo\): definição a escrever por você/)
+  assert.match(text, /não escreva\): Liberação/)
+  assert.match(text, /- Reserva expira por TTL\n- Reserva expira por TTL/)
+  assert.match(text, /TDD · Technical Design Document: invoque a skill grill-me-mod:doc-tdd/)
+  assert.match(text, /Runbook: invoque a skill grill-me-mod:doc-runbook/)
+  assert.doesNotMatch(text, /doc-prd/)
+})
+
+test('extra documents register under their own kind and get a short default label', () => {
+  const s = S.upsertDocs(S.emptyState(), [{ id: 't', kind: 'tdd', path: 'docs/tdd/x.md' }, { id: 'r', kind: 'runbook', path: 'docs/runbook/x.md' }, { id: 'a', kind: 'zzz', path: 'p' }])
+  assert.deepEqual(s.docs.map(d => [d.kind, d.label]), [['tdd', 'TDD'], ['runbook', 'Runbook'], ['adr', 'ADR']])
+})
+
+test('an old state file without a plan loads with none; a stored plan keeps its choices and lists all five extras', () => {
+  assert.equal(S.normalize({ ...S.emptyState(), plan: undefined }).plan, null)
+  const stored = S.normalize({ ...planned(), plan: { ...planned().plan, extras: [{ type: 'rfc', isSelected: true, isSuggested: true, reason: 'r' }] } })
+  assert.deepEqual(stored.plan.extras.map(e => [e.type, e.isSelected]), [['tdd', false], ['prd', false], ['brd', false], ['rfc', true], ['runbook', false]])
+})

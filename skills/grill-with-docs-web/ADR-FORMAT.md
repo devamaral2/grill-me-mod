@@ -26,9 +26,11 @@ Only include these when they add genuine value. Most ADRs won't need them.
 
 Scan `docs/adr/` for the highest existing number and increment by one.
 
-## When to offer an ADR
+## Which decisions get their own ADR
 
-All three of these must be true:
+In grill-me-mod every interview produces at least one ADR, and the person confirms each title before it is written. Use the three tests below to tell a decision that deserves an ADR of its own from a detail that fits in one line of another.
+
+A decision deserves one when all three are true:
 
 1. **Hard to reverse**: the cost of changing your mind later is meaningful
 2. **Surprising without context**: a future reader will look at the code and wonder "why on earth did they do it this way?"

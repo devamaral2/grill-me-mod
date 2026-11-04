@@ -4,16 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>grill-me-mod</title>
-<meta name="color-scheme" content="light dark">
-<script>
-  // Before first paint, so the page never flashes light: saved choice, else the system's.
-  (() => {
-    let t = ''
-    try { t = localStorage.getItem('grill-theme') || '' } catch {}
-    if (t !== 'light' && t !== 'dark') t = matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-    document.documentElement.dataset.theme = t
-  })()
-</script>
+<meta name="color-scheme" content="dark">
 <link rel="stylesheet" href="./app.css">
 </head>
 <body>

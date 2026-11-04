@@ -107,3 +107,21 @@ _Avoid_: log, resumo
 **Consolidado**:
 O relatório que compara as 3 rodadas de cada harness, gerado só dos `relatorio.json` de uma mesma versão da tarefa. Mostra taxa de aprovação, mediana, mínimo e máximo, e uma matriz requisito por harness; declara empate quando a diferença cabe na variação observada, em vez de montar ranking.
 _Avoid_: ranking, placar
+
+### Rede social acadêmica
+
+**Discussão**:
+Conjunto de comentários de um trabalho científico, organizados por eixo.
+_Avoid_: fórum, thread, conversa
+
+**Eixo**:
+Aspecto do trabalho a que um comentário se refere, como contribuição, metodologia, resultados ou limitações. Quem comenta escolhe o eixo.
+_Avoid_: categoria, tag
+
+**Acompanhar**:
+Estado de um pesquisador em relação a um trabalho em que comentou, que reivindicou como autor ou que decidiu seguir. É o que dispara os alertas.
+_Avoid_: favoritar, assinar
+
+**Fase por convite**:
+Período inicial em que só entram pesquisadores convidados. Termina quando os pesquisadores dessa fase voltam a discutir, que é o critério de sucesso do MVP.
+_Avoid_: piloto, beta fechado
